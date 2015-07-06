@@ -1,88 +1,116 @@
 <?php namespace Stevenmaguire\OAuth2\Client\Provider;
 
 use League\OAuth2\Client\Provider\AbstractProvider;
-use League\OAuth2\Client\Entity\User;
 use League\OAuth2\Client\Token\AccessToken;
+use Psr\Http\Message\ResponseInterface;
 
 class Uber extends AbstractProvider
 {
-    public $scopes = [];
-    public $responseType = 'json';
-    public $authorizationHeader = 'Bearer';
+    /**
+     * Default scopes
+     *
+     * @var array
+     */
+    public $defaultScopes = [];
+
+    /**
+     * Uber Api version
+     *
+     * @var string
+     */
     public $version = 'v1';
 
     /**
-     * Get the URL that this provider uses to begin authorization.
+     * Get authorization headers used by this provider.
+     *
+     * Typically this is "Bearer" or "MAC". For more information see:
+     * http://tools.ietf.org/html/rfc6749#section-7.1
+     *
+     * No default is provided, providers must overload this method to activate
+     * authorization headers.
+     *
+     * @return array
+     */
+    protected function getAuthorizationHeaders($token = null)
+    {
+        return ['Authorization' => 'Bearer ' . $token];
+    }
+
+    /**
+     * Get authorization url to begin OAuth flow
      *
      * @return string
      */
-    public function urlAuthorize()
+    public function getBaseAuthorizationUrl()
     {
         return 'https://login.uber.com/oauth/authorize';
     }
 
     /**
-     * Get the URL that this provider users to request an access token.
+     * Get access token url to retrieve token
      *
      * @return string
      */
-    public function urlAccessToken()
+    public function getBaseAccessTokenUrl(array $params)
     {
         return 'https://login.uber.com/oauth/token';
     }
 
     /**
-     * Get the URL that this provider uses to request user details.
+     * Get provider url to fetch user details
      *
-     * Since this URL is typically an authorized route, most providers will require you to pass the access_token as
-     * a parameter to the request. For example, the google url is:
+     * @param  AccessToken $token
      *
-     * 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token='.$token
-     *
-     * @param AccessToken $token
      * @return string
      */
-    public function urlUserDetails(AccessToken $token)
+    public function getUserDetailsUrl(AccessToken $token)
     {
         return 'https://api.uber.com/'.$this->version.'/me';
     }
 
     /**
-     * Given an object response from the server, process the user details into a format expected by the user
-     * of the client.
+     * Get the default scopes used by this provider.
+     *
+     * This should not be a complete list of all scopes, but the minimum
+     * required for the provider user interface!
+     *
+     * @return array
+     */
+    protected function getDefaultScopes()
+    {
+        return $this->defaultScopes;
+    }
+
+    /**
+     * Check a provider response for errors.
+     *
+     * @throws IdentityProviderException
+     * @param  ResponseInterface $response
+     * @param  string $data Parsed response data
+     * @return void
+     */
+    protected function checkResponse(ResponseInterface $response, $data)
+    {
+
+    }
+
+    /**
+     * Generate a user object from a successful user details request.
      *
      * @param object $response
      * @param AccessToken $token
-     * @return mixed
+     * @return League\OAuth2\Client\Provider\UserInterface
      */
-    public function userDetails($response, AccessToken $token)
+    protected function createUser(array $response, AccessToken $token)
     {
-        $user = new User();
+        $attributes = [
+            'userId' => $response['uuid'],
+            'firstname' => $response['first_name'],
+            'lastname' => $response['last_name'],
+            'email' => $response['email'],
+            'imageurl' => $response['picture'],
+        ];
 
-        $user->exchangeArray([
-            'uid' => $response->uuid,
-            'name' => $response->first_name . ' ' . $response->last_name,
-            'firstname' => $response->first_name,
-            'lastname' => $response->last_name,
-            'email' => $response->email,
-            'imageUrl' => $response->picture,
-        ]);
-
-        return $user;
-    }
-
-    public function userUid($response, AccessToken $token)
-    {
-        return $response->uuid;
-    }
-
-    public function userEmail($response, AccessToken $token)
-    {
-        return $response->email;
-    }
-
-    public function userScreenName($response, AccessToken $token)
-    {
-        return null;
+        return new User($attributes);
     }
 }

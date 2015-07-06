@@ -33,20 +33,32 @@ class UberTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('scope', $query);
         $this->assertArrayHasKey('response_type', $query);
         $this->assertArrayHasKey('approval_prompt', $query);
-        $this->assertNotNull($this->provider->state);
+        $this->assertNotNull($this->provider->getState());
     }
 
-    public function testUrlAuthorize()
+
+    public function testScopes()
     {
-        $url = $this->provider->urlAuthorize();
+        $options = ['scope' => [uniqid(),uniqid()]];
+
+        $url = $this->provider->getAuthorizationUrl($options);
+
+        $this->assertContains(urlencode(implode(',', $options['scope'])), $url);
+    }
+
+    public function testGetAuthorizationUrl()
+    {
+        $url = $this->provider->getAuthorizationUrl();
         $uri = parse_url($url);
 
         $this->assertEquals('/oauth/authorize', $uri['path']);
     }
 
-    public function testUrlAccessToken()
+    public function testGetBaseAccessTokenUrl()
     {
-        $url = $this->provider->urlAccessToken();
+        $params = [];
+
+        $url = $this->provider->getBaseAccessTokenUrl($params);
         $uri = parse_url($url);
 
         $this->assertEquals('/oauth/token', $uri['path']);
@@ -54,56 +66,53 @@ class UberTest extends \PHPUnit_Framework_TestCase
 
     public function testGetAccessToken()
     {
-        $response = m::mock('Guzzle\Http\Message\Response');
-        $response->shouldReceive('getBody')->times(1)->andReturn('{"access_token": "mock_access_token", "expires": 3600, "refresh_token": "mock_refresh_token", "uid": 1}');
+        $response = m::mock('Psr\Http\Message\ResponseInterface');
+        $response->shouldReceive('getBody')->andReturn('{"access_token": "mock_access_token", "expires": 3600, "refresh_token": "mock_refresh_token", "uid": 1}');
+        $response->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
 
-        $client = m::mock('Guzzle\Service\Client');
-        $client->shouldReceive('setBaseUrl')->times(1);
-        $client->shouldReceive('post->send')->times(1)->andReturn($response);
+        $client = m::mock('GuzzleHttp\ClientInterface');
+        $client->shouldReceive('send')->times(1)->andReturn($response);
         $this->provider->setHttpClient($client);
 
         $token = $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
 
-        $this->assertEquals('mock_access_token', $token->accessToken);
-        $this->assertLessThanOrEqual(time() + 3600, $token->expires);
-        $this->assertGreaterThanOrEqual(time(), $token->expires);
-        $this->assertEquals('mock_refresh_token', $token->refreshToken);
-        $this->assertEquals('1', $token->uid);
-    }
-
-    public function testScopes()
-    {
-        $this->assertEmpty($this->provider->getScopes());
-    }
-
-    public function testAuthorizationHeader()
-    {
-        $this->assertEquals('Bearer', $this->provider->authorizationHeader);
+        $this->assertEquals('mock_access_token', $token->getToken());
+        $this->assertLessThanOrEqual(time() + 3600, $token->getExpires());
+        $this->assertGreaterThanOrEqual(time(), $token->getExpires());
+        $this->assertEquals('mock_refresh_token', $token->getRefreshToken());
+        $this->assertEquals('1', $token->getUid());
     }
 
     public function testUserData()
     {
-        $postResponse = m::mock('Guzzle\Http\Message\Response');
-        $postResponse->shouldReceive('getBody')->times(1)->andReturn('{"access_token": "mock_access_token","token_type": "Bearer","expires_in": "mock_expires","refresh_token": "mock_refresh_token","scope": "scope1 scope2"}');
+        $email = uniqid();
+        $userId = rand(1000,9999);
+        $firstName = uniqid();
+        $lastName = uniqid();
+        $picture = uniqid();
+        $coupon = uniqid();
 
-        $getResponse = m::mock('Guzzle\Http\Message\Response');
-        $getResponse->shouldReceive('getBody')->times(4)->andReturn('{"first_name": "mock_first_name","last_name": "mock_last_name","email": "mock_email","picture": "mock_image_url","promo_code": "teypo","uuid": "mock_id"}');
+        $postResponse = m::mock('Psr\Http\Message\ResponseInterface');
+        $postResponse->shouldReceive('getBody')->andReturn('{"access_token": "mock_access_token", "expires": 3600, "refresh_token": "mock_refresh_token", "uid": '.$userId.'}');
+        $postResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
 
-        $client = m::mock('Guzzle\Service\Client');
-        $client->shouldReceive('setBaseUrl')->times(5);
-        $client->shouldReceive('setDefaultOption')->times(4);
-        $client->shouldReceive('post->send')->times(1)->andReturn($postResponse);
-        $client->shouldReceive('get->send')->times(4)->andReturn($getResponse);
+        $userResponse = m::mock('Psr\Http\Message\ResponseInterface');
+        $userResponse->shouldReceive('getBody')->andReturn('{"first_name": "'.$firstName.'","last_name": "'.$lastName.'","email": "'.$email.'","picture": "'.$picture.'","promo_code": "'.$coupon.'","uuid": "'.$userId.'"}');
+        $userResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
+
+        $client = m::mock('GuzzleHttp\ClientInterface');
+        $client->shouldReceive('send')
+            ->times(2)
+            ->andReturn($postResponse, $userResponse);
         $this->provider->setHttpClient($client);
 
         $token = $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
-        $user = $this->provider->getUserDetails($token);
+        $user = $this->provider->getUser($token);
 
-        $this->assertEquals('mock_id', $this->provider->getUserUid($token));
-        $this->assertNull($this->provider->getUserScreenName($token));
-        $this->assertEquals('mock_email', $this->provider->getUserEmail($token));
-        $this->assertEquals('mock_email', $user->email);
-        $this->assertEquals('mock_image_url', $user->imageUrl);
+        $this->assertEquals($email, $user->getEmail());
+        $this->assertEquals($userId, $user->getUserId());
+        $this->assertEquals($firstName, $user->getFirstname());
+        $this->assertEquals($lastName, $user->getLastname());
+        $this->assertEquals($picture, $user->getImageurl());
     }
 }
-
