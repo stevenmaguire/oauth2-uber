@@ -33,7 +33,7 @@ if (!isset($_GET['code'])) {
 
     // If we don't have an authorization code then get one
     $authUrl = $provider->getAuthorizationUrl();
-    $_SESSION['oauth2state'] = $provider->state;
+    $_SESSION['oauth2state'] = $provider->getState();
     header('Location: '.$authUrl);
     exit;
 
@@ -54,10 +54,10 @@ if (!isset($_GET['code'])) {
     try {
 
         // We got an access token, let's now get the user's details
-        $userDetails = $provider->getUserDetails($token);
+        $user = $provider->getUser($token);
 
         // Use these details to create a new profile
-        printf('Hello %s!', $userDetails->firstName);
+        printf('Hello %s!', $user->getFirstname());
 
     } catch (Exception $e) {
 
@@ -66,9 +66,27 @@ if (!isset($_GET['code'])) {
     }
 
     // Use this to interact with an API on the users behalf
-    echo $token->accessToken;
+    echo $token;
 }
 ```
+
+### Managing Scopes
+
+When creating your Uber authorization URL, you can specify the scopes your application may authorize.
+
+```php
+$options = ['scopes' => ['profile','history_lite']];
+
+$url = $provider->getAuthorizationUrl($options);
+```
+
+At the time of authoring this documentation, the following scopes are available.
+
+- profile
+- history
+- history_lite
+- request
+- request_receipt
 
 ### Refreshing a Token
 
@@ -82,3 +100,24 @@ $provider = new Stevenmaguire\OAuth2\Client\Provider\Uber([
 $grant = new \League\OAuth2\Client\Grant\RefreshToken();
 $token = $provider->getAccessToken($grant, ['refresh_token' => $refreshToken]);
 ```
+
+## Testing
+
+``` bash
+$ ./vendor/bin/phpunit
+```
+
+## Contributing
+
+Please see [CONTRIBUTING](https://github.com/stevenmaguire/oauth2-uber/blob/master/CONTRIBUTING.md) for details.
+
+
+## Credits
+
+- [Steven Maguire](https://github.com/stevenmaguire)
+- [All Contributors](https://github.com/stevenmaguire/oauth2-uber/contributors)
+
+
+## License
+
+The MIT License (MIT). Please see [License File](https://github.com/stevenmaguire/oauth2-uber/blob/master/LICENSE) for more information.
