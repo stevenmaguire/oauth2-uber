@@ -72,13 +72,17 @@ if (!isset($_GET['code'])) {
 
 ### Managing Scopes
 
-When creating your Uber authorization URL, you can specify the scopes your application may authorize.
+When creating your Uber authorization URL, you can specify the state and scopes your application may authorize.
 
 ```php
-$options = ['scopes' => ['profile','history_lite']];
+$options = [
+    'state' => 'OPTIONAL_CUSTOM_CONFIGURED_STATE',
+    'scope' => ['profile','history_lite'] // array or string
+];
 
-$url = $provider->getAuthorizationUrl($options);
+$authorizationUrl = $provider->getAuthorizationUrl($options);
 ```
+If neither are defined, the provider will utilize internal defaults.
 
 At the time of authoring this documentation, the following scopes are available.
 
