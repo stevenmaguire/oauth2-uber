@@ -103,14 +103,6 @@ class Uber extends AbstractProvider
      */
     protected function createUser(array $response, AccessToken $token)
     {
-        $attributes = [
-            'userId' => $response['uuid'],
-            'firstname' => $response['first_name'],
-            'lastname' => $response['last_name'],
-            'email' => $response['email'],
-            'imageurl' => $response['picture'],
-        ];
-
-        return new User($attributes);
+        return new User($response, $response['uuid']);
     }
 }

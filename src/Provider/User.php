@@ -1,71 +1,13 @@
 <?php namespace Stevenmaguire\OAuth2\Client\Provider;
 
-use League\OAuth2\Client\Provider\UserInterface;
+use League\OAuth2\Client\Provider\StandardUser;
 
-class User implements UserInterface
+/**
+ * @property array $response
+ * @property string $uid
+ */
+class User extends StandardUser
 {
-    /**
-     * User email
-     *
-     * @var string
-     */
-    protected $email;
-
-    /**
-     * User firstname
-     *
-     * @var string
-     */
-    protected $firstname;
-
-    /**
-     * User imageurl
-     *
-     * @var string
-     */
-    protected $imageurl;
-
-    /**
-     * User lastname
-     *
-     * @var string
-     */
-    protected $lastname;
-
-    /**
-     * User userId
-     *
-     * @var string
-     */
-    protected $userId;
-
-    /**
-     * Create new user
-     *
-     * @param array $attributes
-     */
-    public function __construct($attributes = [])
-    {
-        array_walk($attributes, [$this, 'mergeAttribute']);
-    }
-
-    /**
-     * Attempt to merge individual attributes with user properties
-     *
-     * @param  mixed   $value
-     * @param  string  $key
-     *
-     * @return void
-     */
-    private function mergeAttribute($value, $key)
-    {
-        $method = 'set'.ucfirst($key);
-
-        if (method_exists($this, $method)) {
-            $this->$method($value);
-        }
-    }
-
     /**
      * Get user email
      *
@@ -73,21 +15,7 @@ class User implements UserInterface
      */
     public function getEmail()
     {
-        return $this->email;
-    }
-
-    /**
-     * Set user email
-     *
-     * @param  string $email
-     *
-     * @return this
-     */
-    public function setEmail($email)
-    {
-        $this->email = $email;
-
-        return $this;
+        return $this->response['email'] ?: null;
     }
 
     /**
@@ -97,21 +25,7 @@ class User implements UserInterface
      */
     public function getFirstname()
     {
-        return $this->firstname;
-    }
-
-    /**
-     * Set user firstname
-     *
-     * @param  string $firstname
-     *
-     * @return this
-     */
-    public function setFirstname($firstname)
-    {
-        $this->firstname = $firstname;
-
-        return $this;
+        return $this->response['first_name'] ?: null;
     }
 
     /**
@@ -121,21 +35,7 @@ class User implements UserInterface
      */
     public function getImageurl()
     {
-        return $this->imageurl;
-    }
-
-    /**
-     * Set user imageurl
-     *
-     * @param  string $imageurl
-     *
-     * @return this
-     */
-    public function setImageurl($imageurl)
-    {
-        $this->imageurl = $imageurl;
-
-        return $this;
+        return $this->response['picture'] ?: null;
     }
 
     /**
@@ -145,21 +45,7 @@ class User implements UserInterface
      */
     public function getLastname()
     {
-        return $this->lastname;
-    }
-
-    /**
-     * Set user lastname
-     *
-     * @param  string $lastname
-     *
-     * @return this
-     */
-    public function setLastname($lastname)
-    {
-        $this->lastname = $lastname;
-
-        return $this;
+        return $this->response['last_name'] ?: null;
     }
 
     /**
@@ -169,20 +55,6 @@ class User implements UserInterface
      */
     public function getUserId()
     {
-        return $this->userId;
-    }
-
-    /**
-     * Set user userId
-     *
-     * @param  string $userId
-     *
-     * @return this
-     */
-    public function setUserId($userId)
-    {
-        $this->userId = $userId;
-
-        return $this;
+        return $this->uid;
     }
 }
