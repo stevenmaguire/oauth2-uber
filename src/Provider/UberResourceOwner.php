@@ -1,12 +1,12 @@
 <?php namespace Stevenmaguire\OAuth2\Client\Provider;
 
-use League\OAuth2\Client\Provider\StandardUser;
+use League\OAuth2\Client\Provider\GenericResourceOwner;
 
 /**
  * @property array $response
  * @property string $uid
  */
-class User extends StandardUser
+class UberResourceOwner extends GenericResourceOwner
 {
     /**
      * Get user email
@@ -53,8 +53,8 @@ class User extends StandardUser
      *
      * @return string
      */
-    public function getUserId()
+    public function getId()
     {
-        return $this->uid;
+        return $this->resourceOwnerId;
     }
 }

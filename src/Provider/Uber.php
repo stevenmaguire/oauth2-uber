@@ -63,7 +63,7 @@ class Uber extends AbstractProvider
      *
      * @return string
      */
-    public function getUserDetailsUrl(AccessToken $token)
+    public function getResourceOwnerDetailsUrl(AccessToken $token)
     {
         return 'https://api.uber.com/'.$this->version.'/me';
     }
@@ -99,10 +99,10 @@ class Uber extends AbstractProvider
      *
      * @param object $response
      * @param AccessToken $token
-     * @return League\OAuth2\Client\Provider\UserInterface
+     * @return League\OAuth2\Client\Provider\ResourceOwnerInterface
      */
-    protected function createUser(array $response, AccessToken $token)
+    protected function createResourceOwner(array $response, AccessToken $token)
     {
-        return new User($response, $response['uuid']);
+        return new UberResourceOwner($response, $response['uuid']);
     }
 }
