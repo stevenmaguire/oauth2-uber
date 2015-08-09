@@ -110,9 +110,14 @@ class UberTest extends \PHPUnit_Framework_TestCase
         $user = $this->provider->getResourceOwner($token);
 
         $this->assertEquals($email, $user->getEmail());
+        $this->assertEquals($email, $user->toArray()['email']);
         $this->assertEquals($userId, $user->getId());
+        $this->assertEquals($userId, $user->toArray()['uuid']);
         $this->assertEquals($firstName, $user->getFirstname());
+        $this->assertEquals($firstName, $user->toArray()['first_name']);
         $this->assertEquals($lastName, $user->getLastname());
+        $this->assertEquals($lastName, $user->toArray()['last_name']);
         $this->assertEquals($picture, $user->getImageurl());
+        $this->assertEquals($picture, $user->toArray()['picture']);
     }
 }

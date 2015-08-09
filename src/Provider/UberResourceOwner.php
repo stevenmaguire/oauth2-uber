@@ -1,17 +1,30 @@
 <?php namespace Stevenmaguire\OAuth2\Client\Provider;
 
-use League\OAuth2\Client\Provider\GenericResourceOwner;
+use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 
-/**
- * @property array $response
- * @property string $uid
- */
-class UberResourceOwner extends GenericResourceOwner
+class UberResourceOwner implements ResourceOwnerInterface
 {
+    /**
+     * Raw response
+     *
+     * @var array
+     */
+    protected $response;
+
+    /**
+     * Creates new resource owner.
+     *
+     * @param array  $response
+     */
+    public function __construct(array $response = array())
+    {
+        $this->response = $response;
+    }
+
     /**
      * Get user email
      *
-     * @return string
+     * @return string|null
      */
     public function getEmail()
     {
@@ -21,7 +34,7 @@ class UberResourceOwner extends GenericResourceOwner
     /**
      * Get user firstname
      *
-     * @return string
+     * @return string|null
      */
     public function getFirstname()
     {
@@ -31,7 +44,7 @@ class UberResourceOwner extends GenericResourceOwner
     /**
      * Get user imageurl
      *
-     * @return string
+     * @return string|null
      */
     public function getImageurl()
     {
@@ -41,7 +54,7 @@ class UberResourceOwner extends GenericResourceOwner
     /**
      * Get user lastname
      *
-     * @return string
+     * @return string|null
      */
     public function getLastname()
     {
@@ -51,10 +64,20 @@ class UberResourceOwner extends GenericResourceOwner
     /**
      * Get user userId
      *
-     * @return string
+     * @return string|null
      */
     public function getId()
     {
-        return $this->resourceOwnerId;
+        return $this->response['uuid'] ?: null;
+    }
+
+    /**
+     * Return all of the owner details available as an array.
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        return $this->response;
     }
 }
