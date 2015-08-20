@@ -69,6 +69,7 @@ class UberTest extends \PHPUnit_Framework_TestCase
         $response = m::mock('Psr\Http\Message\ResponseInterface');
         $response->shouldReceive('getBody')->andReturn('{"access_token": "mock_access_token","token_type": "Bearer","expires_in": 3600,"refresh_token": "mock_refresh_token","scope": "profile history"}');
         $response->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
+        $response->shouldReceive('getStatusCode')->andReturn(200);
 
         $client = m::mock('GuzzleHttp\ClientInterface');
         $client->shouldReceive('send')->times(1)->andReturn($response);
@@ -95,10 +96,12 @@ class UberTest extends \PHPUnit_Framework_TestCase
         $postResponse = m::mock('Psr\Http\Message\ResponseInterface');
         $postResponse->shouldReceive('getBody')->andReturn('{"access_token": "mock_access_token","token_type": "Bearer","expires_in": 3600,"refresh_token": "mock_refresh_token","scope": "profile history"}');
         $postResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
+        $postResponse->shouldReceive('getStatusCode')->andReturn(200);
 
         $userResponse = m::mock('Psr\Http\Message\ResponseInterface');
         $userResponse->shouldReceive('getBody')->andReturn('{"first_name": "'.$firstName.'","last_name": "'.$lastName.'","email": "'.$email.'","picture": "'.$picture.'","promo_code": "'.$coupon.'","uuid": "'.$userId.'"}');
         $userResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
+        $userResponse->shouldReceive('getStatusCode')->andReturn(200);
 
         $client = m::mock('GuzzleHttp\ClientInterface');
         $client->shouldReceive('send')
@@ -119,5 +122,25 @@ class UberTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($lastName, $user->toArray()['last_name']);
         $this->assertEquals($picture, $user->getImageurl());
         $this->assertEquals($picture, $user->toArray()['picture']);
+    }
+
+    /**
+     * @expectedException League\OAuth2\Client\Provider\Exception\IdentityProviderException
+     **/
+    public function testExceptionThrownWhenErrorObjectReceived()
+    {
+        $message = uniqid();
+        $status = rand(400,600);
+        $postResponse = m::mock('Psr\Http\Message\ResponseInterface');
+        $postResponse->shouldReceive('getBody')->andReturn('{"message": "'.$message.'","code": "invalid","fields": {"first_name": ["Required"]}}');
+        $postResponse->shouldReceive('getHeader')->andReturn(['content-type' => 'json']);
+        $postResponse->shouldReceive('getStatusCode')->andReturn($status);
+
+        $client = m::mock('GuzzleHttp\ClientInterface');
+        $client->shouldReceive('send')
+            ->times(1)
+            ->andReturn($postResponse);
+        $this->provider->setHttpClient($client);
+        $token = $this->provider->getAccessToken('authorization_code', ['code' => 'mock_authorization_code']);
     }
 }

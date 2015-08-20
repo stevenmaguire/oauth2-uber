@@ -1,6 +1,7 @@
 <?php namespace Stevenmaguire\OAuth2\Client\Provider;
 
 use League\OAuth2\Client\Provider\AbstractProvider;
+use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
 use League\OAuth2\Client\Tool\BearerAuthorizationTrait;
 use Psr\Http\Message\ResponseInterface;
@@ -71,6 +72,7 @@ class Uber extends AbstractProvider
     /**
      * Check a provider response for errors.
      *
+     * @link https://developer.uber.com/v1/api-reference/
      * @throws IdentityProviderException
      * @param  ResponseInterface $response
      * @param  string $data Parsed response data
@@ -78,7 +80,15 @@ class Uber extends AbstractProvider
      */
     protected function checkResponse(ResponseInterface $response, $data)
     {
+        $acceptableStatuses = [200, 201];
 
+        if (!in_array($response->getStatusCode(), $acceptableStatuses)) {
+            throw new IdentityProviderException(
+                $data['message'] ?: $response->getReasonPhrase(),
+                $response->getStatusCode(),
+                $response
+            );
+        }
     }
 
     /**
