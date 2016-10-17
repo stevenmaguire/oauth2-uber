@@ -43,7 +43,7 @@ class UberTest extends \PHPUnit_Framework_TestCase
 
         $url = $this->provider->getAuthorizationUrl($options);
 
-        $this->assertContains(urlencode(implode(',', $options['scope'])), $url);
+        $this->assertContains(urlencode(implode(' ', $options['scope'])), $url);
     }
 
     public function testGetAuthorizationUrl()
